@@ -13,10 +13,11 @@ from Modul_4.Cinescope.utils.data_generator import DataGenerator
 from Modul_4.Cinescope.api.auth_api import AuthAPI
 from Modul_4.Cinescope.api.api_manager import ApiManager
 from Modul_4.Cinescope.utils.user_data import UserData
+from Modul_4.Cinescope.models.base_models import TestUser
 
 
 @pytest.fixture(scope="session")
-def test_user():
+def test_user() -> TestUser: # добавили формат возвращаеммого значения TestUser
     """
     Генерация случайного пользователя для тестов.
     """
@@ -24,21 +25,22 @@ def test_user():
     random_name = DataGenerator.generate_random_name()
     random_password = DataGenerator.generate_random_password()
 
-    return {
-        "email": random_email,
-        "fullName": random_name,
-        "password": random_password,
-        "passwordRepeat": random_password,  # Убедимся, что password и passwordRepeat совпадают
-        "roles": ["USER"]
-    }
+    return TestUser( # возвращем обьект с опередленный набором полей и правил. нет возможности добавить чтото еще
+        email=random_email,
+        fullName=random_name,
+        password=random_password,
+        passwordRepeat=random_password, # field_validator автоматически проверит, что password и passwordRepeat совпадают
+    ) # поле roles заполнится автоматически и бедт = [Role.USER]
+
 @pytest.fixture(scope="session")
-def registered_user(api_manager, test_user):
+def registered_user(api_manager, test_user: TestUser):# указали тип TestUser для входящего значения test_user. теперь и интерпритатор
+                                                      # и разработчик понимают с чем они имеют дело
     """
     Фикстура для регистрации пользователя через auth_api.
     """
     response = api_manager.auth_api.register_user(test_user)
     response_data = response.json()
-    test_user["id"] = response_data["id"]
+    test_user.id = response_data["id"]
     return test_user
 
 @pytest.fixture
