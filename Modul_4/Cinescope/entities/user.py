@@ -12,3 +12,4 @@ class User:
     def creds(self):
         """Возвращает кортеж (email, password)"""
         return self.email, self.password
+    

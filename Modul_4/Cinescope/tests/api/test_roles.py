@@ -1,5 +1,6 @@
 import pytest
 
+from Modul_4.Cinescope.enums.roles import Roles
 from Modul_4.Cinescope.utils.data_generator import DataGenerator
 
 
@@ -7,11 +8,11 @@ class TestRoleBasedAccess:
     """Тестирование ролевой модели пользователей"""
 
     @pytest.mark.parametrize("role, expected_status", [
-        ("USER", 403),
-        ("ADMIN", 403),  # Исправлено с 201 на 403
-        ("SUPER_ADMIN", 201)
+        (Roles.USER, 403),
+        (Roles.ADMIN, 403),  # Исправлено с 201 на 403
+        (Roles.SUPER_ADMIN, 201)
     ])
-    def test_create_movie_by_role(self, api_manager, user_create, role, expected_status, super_admin):
+    def test_create_movie_by_role(self, api_manager, user_create, role: Roles, expected_status, super_admin):
         """Проверяет, какие роли могут создавать фильмы"""
         user = user_create(role)
         assert "id" in user, "Ошибка: в user_create нет ключа 'id'"
@@ -30,7 +31,7 @@ class TestRoleBasedAccess:
 
 
         updated_user = api_manager.auth_api.get_user(user["id"], super_admin)
-        assert role in updated_user["roles"], f"Ошибка: у пользователя нет роли {role} после обновления."
+        assert role.value in updated_user["roles"], f"Ошибка: у пользователя нет роли {role.value} после обновления."
 
         # 🔄 Перелогиниваемся после смены роли
         new_token_response = api_manager.auth_api.login_user(

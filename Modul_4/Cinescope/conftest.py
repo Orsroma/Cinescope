@@ -13,10 +13,11 @@ from Modul_4.Cinescope.utils.data_generator import DataGenerator
 from Modul_4.Cinescope.api.auth_api import AuthAPI
 from Modul_4.Cinescope.api.api_manager import ApiManager
 from Modul_4.Cinescope.utils.user_data import UserData
+from Modul_4.Cinescope.models.base_models import TestUser
 
 
 @pytest.fixture(scope="session")
-def test_user():
+def test_user() -> TestUser: # добавили формат возвращаеммого значения TestUser
     """
     Генерация случайного пользователя для тестов.
     """
@@ -24,21 +25,22 @@ def test_user():
     random_name = DataGenerator.generate_random_name()
     random_password = DataGenerator.generate_random_password()
 
-    return {
-        "email": random_email,
-        "fullName": random_name,
-        "password": random_password,
-        "passwordRepeat": random_password,  # Убедимся, что password и passwordRepeat совпадают
-        "roles": ["USER"]
-    }
+    return TestUser( # возвращем обьект с опередленный набором полей и правил. нет возможности добавить чтото еще
+        email=random_email,
+        fullName=random_name,
+        password=random_password,
+        passwordRepeat=random_password, # field_validator автоматически проверит, что password и passwordRepeat совпадают
+    ) # поле roles заполнится автоматически и бедт = [Role.USER]
+
 @pytest.fixture(scope="session")
-def registered_user(api_manager, test_user):
+def registered_user(api_manager, test_user: TestUser):# указали тип TestUser для входящего значения test_user. теперь и интерпритатор 
+                                                      # и разработчик понимают с чем они имеют дело
     """
     Фикстура для регистрации пользователя через auth_api.
     """
     response = api_manager.auth_api.register_user(test_user)
     response_data = response.json()
-    test_user["id"] = response_data["id"]
+    test_user.id = response_data["id"]
     return test_user
 
 @pytest.fixture
@@ -77,10 +79,10 @@ def user_create(api_manager, super_admin):
     """Фикстура для создания пользователей с разными ролями."""
     created_users = []
 
-    def _user_create(role):
+    def _user_create(role: Roles):
         # ✅ Генерируем данные пользователя
         user_data = UserData.generate_user_data(role)
-        email, password = user_data["email"], user_data["password"]
+        email, password = user_data.email, user_data.password
 
         # ✅ Регистрируем пользователя
         response = api_manager.auth_api.register_user(user_data)
@@ -99,12 +101,12 @@ def user_create(api_manager, super_admin):
                        api_manager.auth_api.login_user({"email": email, "password": password}).json()["accessToken"]
 
         # ✅ Если роль не USER, обновляем через супер-админа
-        if role != "USER":
-            api_manager.auth_api.change_user_role(user_id, [role], super_admin)
+        if role != Roles.USER:
+            api_manager.auth_api.change_user_role(user_id, [role.value], super_admin)
 
         created_users.append(user_id)  # ✅ Добавляем пользователя в список
 
-        return {"id": user_id, "email": email,"password": user_data["password"], "token": access_token}
+        return {"id": user_id, "email": email,"password": user_data.password, "token": access_token}
 
     yield _user_create
 

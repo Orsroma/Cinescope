@@ -33,7 +33,7 @@ class TestMoviesAPI:
         Тест для создания нового фильма.
         """
         movie_data = {
-            "name": "Test Movie123",
+        "name": "Test Movie123",
         "price": 500,
         "description": "Описание тестового фильма",
         "location": "MSK",  # Исправлено значение location
